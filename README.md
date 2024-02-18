@@ -32,6 +32,7 @@ curl -sSL https://github.com/kodxana/RunPod-FilleUploader/raw/main/scripts/insta
 - **Pause and Resume**: Control your uploads with the ability to pause and then resume them as needed.
 - **Simple, Intuitive UI**: A user-friendly interface makes uploading files straightforward and accessible from any device.
 - **Backed by `tusd`**: Utilizes `tusd` for reliable, resumable file uploads.
+- **Custom Postprocessing Hooks**: `tusd` supports custom postprocessing hooks, allowing for additional processing of uploaded files. Examples of these hooks can be found in the hook directory of this repository.
 
 ## 📚 Documentation
 
