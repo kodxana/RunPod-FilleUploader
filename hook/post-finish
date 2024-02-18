@@ -1,0 +1,3 @@
+#!/bin/bash
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
+python "$SCRIPT_DIR/rename_uploaded_file.py" "$TUS_ID"
