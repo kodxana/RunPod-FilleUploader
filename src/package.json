@@ -1,0 +1,37 @@
+GNU nano 7.2                                                                                                                     package.json                                                                                                                               {
+    "name": "runpod-uploader",
+    "version": "1.0.0",
+    "description": "Made by Madiator2011",
+    "main": "server.js",
+    "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1",
+      "build": "pkg . --targets=node16-linux-x64 --out-path ./build"
+    },
+    "bin": "server.js",
+    "pkg": {
+      "assets": [
+        "public/**/*"
+      ],
+      "scripts": [
+        "node_modules/**/*.js"
+      ]
+    },
+    "keywords": [],
+    "author": "Madiator2011",
+    "license": "GPL-3.0 license",
+    "dependencies": {
+      "@uppy/core": "^3.8.0",
+      "@uppy/dashboard": "^3.7.1",
+      "@uppy/transloadit": "^3.4.0",
+      "@uppy/tus": "^3.5.0",
+      "body-parser": "^1.20.2",
+      "cors": "^2.8.5",
+      "express": "^4.18.2",
+      "http-proxy-middleware": "^2.0.6",
+      "tus-js-client": "^4.0.1",
+      "tus-node-server": "^0.9.0"
+    },
+    "devDependencies": {
+      "pkg": "^5.3.1"
+    }
+  }

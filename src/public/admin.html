@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <!-- Materialize CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+    <!-- Google Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #181a1b, #000000);
+            color: #ffffff;
+            font-family: 'Roboto', sans-serif;
+            margin: 0; /* Remove default margin */
+            height: 100vh; /* Full height */
+            display: flex;
+            flex-direction: column;
+        }
+        nav {
+            background-color: #5e35b1; /* Dark purple for navbar */
+            width: 100vw; /* Ensure it spans the full width of the viewport */
+            margin: 0; /* Remove default margin to ensure it aligns to the edge */
+            box-shadow: none; /* Remove default shadow */
+            border: none; /* Remove any borders */
+        }
+        .nav-wrapper {
+            background-color: #2a2139; /* Dark purple for navbar */
+            width: 100%; /* Ensure full width */
+            padding: 0 2rem; /* Padding for content */
+        }
+        .nav-wrapper .brand-logo {
+            color: #fff; /* White color for the logo text */
+        }
+        .navbar-env-var {
+            display: inline-block; /* Align items inline */
+            margin-right: 15px; /* Right margin for spacing */
+            padding: 0 10px; /* Padding for visual separation */
+            color: #ffffff; /* White text for better visibility */
+
+        }
+        .dashboard-box, .card {
+            background-color: rgba(255, 255, 255, 0.1); /* Translucent containers for a glassmorphism effect */
+            border: none; /* Remove borders */
+            color: #ffffff; /* Text color */
+        }
+        .card-content {
+            padding: 25px; /* Padding for content inside cards */
+        }
+        .btn, .tool-button, #run-speedtest-btn {
+            background-color: #6a55c2; /* Purple shade for buttons */
+            margin: 5px;
+            box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.25); /* Shadow for depth */
+        }
+        .btn:hover, .tool-button:hover, #run-speedtest-btn:hover {
+            background-color: #7e6ed5; /* Lighter purple on hover */
+            box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.4); /* Deeper shadow on hover */
+        }
+        .speedtest-output-container {
+            background: #1e1e2f; /* Dark background for results */
+            color: #ffffff; /* White text */
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 10px;
+            overflow-y: auto; /* Scrollbar for overflow */
+            max-height: 200px; /* Set a max height */
+            white-space: pre-wrap; /* Ensures content wraps */
+        }
+        .card-action {
+            border-top: 1px solid rgba(255, 255, 255, 0.2); /* Top border for separation */
+        }
+        /* Style the pre element for speedtest results */
+        .speedtest-output-container pre {
+            background: none; /* No background color */
+            border: none; /* No border */
+            margin: 0; /* Remove margin */
+            padding: 0; /* Remove padding */
+            font-family: 'Roboto Mono', monospace; /* Monospaced font for better readability of preformatted text */
+        }
+        .card.blue-grey.darken-1 {
+            background-color: #0e1229 !important; /* Overrides Materialize defaults */
+            border-radius: 8px; /* Rounded corners */
+            box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19); /* Shadow effect */
+        }
+        .dashboard-box .btn, .dashboard-box .tool-button {
+            background-color: #5e35b1 !important; /* A shade of purple */
+            box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.2) !important; /* Shadow for depth */
+        }
+    </style>
+</head>
+<body>
+
+<nav class="blue-grey darken-4">
+    <div class="nav-wrapper">
+        <a href="#" class="brand-logo">Admin Dashboard</a>
+        <ul id="nav-mobile" class="right hide-on-med-and-down flex-navbar">
+            <!-- Each environmental variable is placed in its own <li> with class "navbar-env-var" for additional styling -->
+            <li class="navbar-env-var"><span class="navbar-item">Pod ID:</span> <span id="pod-id">Null</span></li>
+            <li class="navbar-env-var"><span class="navbar-item">Public IP:</span> <span id="public-ip">Null</span></li>
+            <li class="navbar-env-var"><span class="navbar-item">CUDA Version:</span> <span id="cuda-version">Null</span></li>
+            <li class="navbar-env-var"><span class="navbar-item">Data Center ID:</span> <span id="dc-id">Null</span></li>
+            <li class="navbar-env-var"><span class="navbar-item">CPU Count:</span> <span id="cpu-count">Null</span></li>
+        </ul>
+    </div>
+</nav>
+
+    
+<div class="container">
+    <!-- SSH Setup Box -->
+    <div class="row">
+        <div class="col s12 m6">
+            <div class="card blue-grey darken-1 dashboard-box">
+                <div class="card-content white-text">
+                    <span class="card-title">SSH Setup</span>
+                    <p>Configure SSH access and download connection scripts.</p>
+                    <!-- Spacing for visual separation -->
+                    <div style="height: 20px;"></div>
+                    <!-- Root Password Display -->
+                    <div id="root-password-display" class="hide" style="padding: 10px; background: rgba(255, 255, 255, 0.1); border-radius: 5px;">
+                        <span id="root-password-label">Root password:</span>
+                        <!-- Clickable password box for easy copy -->
+                        <div id="root-password-text" style="display: inline-block; padding: 5px; margin-left: 10px; background: rgba(255, 255, 255, 0.2); border-radius: 3px; cursor: pointer;" onclick="copyToClipboard('#root-password-text')">
+                            <!-- Password will be dynamically inserted here -->
+                        </div>
+                    </div>
+                </div>
+                <div class="card-action">
+                    <a href="#" id="setup-ssh-btn" class="btn btn-space light-blue darken-4">Setup SSH</a>
+                    <a href="/download/connect_windows.bat" class="btn btn-space light-blue darken-4 hide" id="download-windows-script"><i class="material-icons left">file_download</i>Download Windows Script</a>
+                    <a href="/download/connect_linux.sh" class="btn btn-space light-blue darken-4 hide" id="download-linux-script"><i class="material-icons left">file_download</i>Download Linux/Mac Script</a>
+                </div>
+            </div>
+        </div>
+        <!-- Tool Installation Widget -->
+<div class="row">
+    <div class="col s12 m6">
+        <div class="card blue-grey darken-1 dashboard-box">
+            <div class="card-content white-text">
+                <span class="card-title">Install Tools</span>
+                <p>Select a tool to install:</p>
+            </div>
+            <div class="card-action">
+                <a href="#" onclick="installTool('croc')" class="btn tool-button light-blue darken-4">Install croc</a>
+                <a href="#" onclick="installTool('tmux')" class="btn tool-button light-blue darken-4">Install tmux</a>
+                <a href="#" onclick="installTool('rsync')" class="btn tool-button light-blue darken-4">Install rsync</a>
+                <a href="#" onclick="installTool('gdown')" class="btn tool-button light-blue darken-4">Install gdown</a>
+                <!-- Add more buttons as needed -->
+            </div>
+        </div>
+    </div>
+
+<!-- Speedtest Widget -->
+<div class="row">
+    <div class="col s12 m6">
+        <div class="card blue-grey darken-1 dashboard-box">
+            <div class="card-content white-text">
+                <span class="card-title">Speedtest Options</span>
+                <form id="speedtest-options">
+                    <label>
+                        <input type="checkbox" name="packageUpdate" />
+                        <span>Package Update</span>
+                    </label>
+                    <label>
+                        <input type="checkbox" name="speedtestCli" />
+                        <span>Speedtest CLI</span>
+                    </label>
+                    <label>
+                        <input type="checkbox" name="civitai" />
+                        <span>Civitai Download</span>
+                    </label>
+                    <label>
+                        <input type="checkbox" name="huggingface" />
+                        <span>Hugging Face Download</span>
+                    </label>
+                    <label>
+                        <input type="checkbox" name="s3" />
+                        <span>S3 Download</span>
+                    </label>
+                    <label>
+                        <input type="checkbox" name="broadbandTest" />
+                        <span>Broadband Test</span>
+                    </label>
+                    <label>
+                        <input type="checkbox" name="googlePing" />
+                        <span>Google Ping</span>
+                    </label>
+                    <!-- More checkboxes can be added here -->
+                    <div style="height: 20px;"></div> <!-- Spacing for visual separation -->
+                    <button id="run-speedtest-btn" class="btn light-blue darken-4">Run Speedtest</button>
+                </form>
+            </div>
+            <div class="card blue-grey darken-1 dashboard-box">
+                <div class="card-content white-text">
+                <span class="card-title">Speedtest Results</span>
+            </div>
+            <div class="card-action">
+                <div class="speedtest-output-container">
+            <pre id="speedtest-output"></pre>
+            </div>
+        </div>
+    </div>
+
+    </div>
+</div>
+   
+    
+</div>
+
+</div>
+
+    
+</div>
+
+
+<!-- Materialize JavaScript -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+<script>
+    // Check if the connect files are already present when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        checkForExistingFiles();
+        fetchEnvironmentVariables();
+    });
+
+    document.getElementById('setup-ssh-btn').addEventListener('click', function(e) {
+        e.preventDefault();
+        // Call the /setup-ssh endpoint
+        fetch('/setup-ssh', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                M.toast({html: 'SSH setup completed successfully'});
+                checkForExistingFiles(); // Check for files again after setup
+                fetchRootPassword(); // Fetch and display the root password
+            })
+            .catch(error => {
+                console.error('Error setting up SSH:', error);
+                M.toast({html: 'SSH setup failed'});
+            });
+    });
+
+    function checkForExistingFiles() {
+        // Check for the existence of the Windows connect script
+        fetch('/download/connect_windows.bat')
+            .then(response => {
+                if (response.ok) {
+                    document.getElementById('download-windows-script').classList.remove('hide');
+                    document.getElementById('setup-ssh-btn').classList.add('hide');
+                    fetchRootPassword(); // Fetch and display the root password
+                }
+            });
+
+        // Check for the existence of the Linux/Mac connect script
+        fetch('/download/connect_linux.sh')
+            .then(response => {
+                if (response.ok) {
+                    document.getElementById('download-linux-script').classList.remove('hide');
+                    document.getElementById('setup-ssh-btn').classList.add('hide');
+                    fetchRootPassword(); // Fetch and display the root password
+                }
+            });
+    }
+
+    function fetchRootPassword() {
+        fetch('/get-root-password')
+            .then(response => response.text())
+            .then(password => {
+                if (password) {
+                    document.getElementById('root-password-text').textContent = password;
+                    document.getElementById('root-password-display').classList.remove('hide');
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching root password:', error);
+            });
+    }
+
+    function copyToClipboard(elementSelector) {
+        var text = document.querySelector(elementSelector).innerText;
+        var elem = document.createElement('textarea');
+        document.body.appendChild(elem);
+        elem.value = text;
+        elem.select();
+        document.execCommand('copy');
+        document.body.removeChild(elem);
+
+        // Notify the user that the text has been copied
+        M.toast({html: 'Password copied to clipboard'});
+    }
+
+    function fetchEnvironmentVariables() {
+        fetch('/environment-variables')
+            .then(response => response.json())
+            .then(envVars => {
+                // Update the navbar with the fetched environmental variables
+                document.getElementById('pod-id').textContent = envVars.RUNPOD_POD_ID || 'Null';
+                document.getElementById('public-ip').textContent = envVars.RUNPOD_PUBLIC_IP || 'Null';
+                document.getElementById('cuda-version').textContent = envVars.CUDA_VERSION || 'Null';
+                document.getElementById('dc-id').textContent = envVars.RUNPOD_DC_ID || 'Null';
+                document.getElementById('cpu-count').textContent = envVars.RUNPOD_CPU_COUNT || 'Null';
+            })
+            .catch(error => {
+                console.error('Error fetching environment variables:', error);
+                // Update the navbar items to 'Null' in case of error
+                document.getElementById('pod-id').textContent = 'Null';
+                document.getElementById('public-ip').textContent = 'Null';
+                document.getElementById('cuda-version').textContent = 'Null';
+                document.getElementById('dc-id').textContent = 'Null';
+                document.getElementById('cpu-count').textContent = 'Null';
+            });
+    }
+    
+    function installTool(toolName) {
+    fetch(`/install-tool/${toolName}`, { method: 'POST' })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            }
+            throw new Error('Installation failed');
+        })
+        .then(data => M.toast({html: `${data.message}`}))
+        .catch(error => console.error('Error installing tool:', error));
+     }
+
+document.getElementById('run-speedtest-btn').addEventListener('click', function(e) {
+    e.preventDefault();
+
+    // Gather the form data
+    const formData = new FormData(document.getElementById('speedtest-options'));
+    const flags = {};
+    for (let [name] of formData) {
+        flags[name] = true; // Set flag to true if checkbox is checked
+    }
+
+    // Send the POST request
+    fetch('/run-speedtest', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(flags)
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Display the result
+        document.getElementById('speedtest-output').textContent = data.result;
+    })
+    .catch(error => {
+        console.error('Error running speedtest:', error);
+    });
+});
+
+    
+</script>
+
+</body>
+</html>

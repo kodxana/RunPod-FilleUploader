@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>RunPod File Uploader</title>
+    <link href="https://releases.transloadit.com/uppy/v2.9.4/uppy.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f0f0f 0%, #2a2139 100%);
+            color: #fff;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #logo {
+            margin: 20px 0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        #uppyDashboard {
+            max-width: 760px;
+            width: 100%;
+            margin: 20px auto;
+            background-color: #1c1b29;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+        #note {
+            max-width: 760px;
+            width: 95%;
+            text-align: center;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        .admin-panel-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #5e35b1; /* Purple shade */
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        .admin-panel-button:hover {
+            background-color: #4527a0; /* Darker purple on hover */
+        }
+    </style>
+</head>
+<body>
+
+<a href="/admin" class="admin-panel-button">Admin Panel</a>
+
+<div id="logo">RunPod File Uploader</div>
+
+<div id="uppyDashboard"></div>
+
+<div id="note">
+    Note: All uploaded files are saved to <code>/workspace</code>.
+</div>
+
+<script src="https://releases.transloadit.com/uppy/v2.9.4/uppy.min.js"></script>
+<script>
+  const uppy = new Uppy.Core({
+      autoProceed: false,
+      restrictions: {
+          maxFileSize: null, // No limit on file size
+          allowedFileTypes: null // Allow all file types
+      }
+  })
+  .use(Uppy.Dashboard, {
+      inline: true,
+      target: '#uppyDashboard',
+      note: 'Upload files of any size and format.',
+      proudlyDisplayPoweredByUppy: false,
+      theme: 'dark',
+      showProgressDetails: true
+  })
+  .use(Uppy.Tus, {
+      // Dynamically set the endpoint based on the current location
+      endpoint: `${window.location.protocol}//${window.location.host}/files/`,
+      chunkSize: 50 * 1024 * 1024, // Set chunk size to 50MB
+  });
+
+  uppy.on('complete', (result) => {
+    console.log('Upload complete! We’ve uploaded these files:', result.successful);
+  });
+</script>
+
+</body>
+</html>
