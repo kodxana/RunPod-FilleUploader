@@ -19,7 +19,7 @@
 To get started with RunPod File Uploader, execute the following command:
 
 ```bash
-curl -sSL https://github.com/kodxana/RunPod-FilleUploader/raw/main/scripts/installer.sh -o installer.sh && chmod +x installer.sh && ./installer.sh
+curl -sSL https://github.com/kodxana/RunPod-FilleUploader/raw/main/scripts/installer.sh -o installer.sh && chmod +x installer.sh && ./installer.sh && runpod-uploader
 ```
 
 ### 📌 Prerequisites
