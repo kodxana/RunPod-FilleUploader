@@ -146,6 +146,10 @@ let timers = [];
 router.post('/set-timer', (req, res) => {
     const { podId, action, duration } = req.body;
     const expiry = new Date(new Date().getTime() + duration * 60000); // Convert duration to milliseconds
+    
+    // Remove existing timer for the podId and action if it exists
+    timers = timers.filter(timer => timer.podId !== podId || timer.action !== action);
+
     const timerId = setTimeout(() => {
         exec(`runpodctl ${action} pod ${podId}`, (error, stdout, stderr) => {
             if (error) {
@@ -153,6 +157,8 @@ router.post('/set-timer', (req, res) => {
                 return;
             }
             console.log(`Timer action ${action} executed for pod ${podId}.`);
+            // Remove timer from the list once executed
+            timers = timers.filter(timer => timer.timerId !== timerId);
         });
     }, duration * 60000);
 
@@ -165,11 +171,25 @@ router.get('/active-timers', (req, res) => {
     const activeTimers = timers.filter(timer => timer.expiry > now).map(timer => ({
         podId: timer.podId,
         action: timer.action,
-        remaining: Math.round((timer.expiry - now) / 60000) // Remaining time in minutes
+        remaining: Math.round((timer.expiry.getTime() - now.getTime()) / 1000) // Convert remaining time to seconds
     }));
     res.json(activeTimers);
 });
 
+// Cancel a specific timer
+router.post('/cancel-timer', (req, res) => {
+    const { podId, action } = req.body;
+
+    // Attempt to find and clear the timer
+    const timerIndex = timers.findIndex(timer => timer.podId === podId && timer.action === action);
+    if (timerIndex !== -1) {
+        clearTimeout(timers[timerIndex].timerId);
+        timers.splice(timerIndex, 1); // Remove the timer from the array
+        res.json({ message: `Timer for ${action}ing pod ${podId} has been cancelled.` });
+    } else {
+        res.status(404).json({ message: "Timer not found." });
+    }
+});
 
 
 module.exports = router;

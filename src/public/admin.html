@@ -25,6 +25,35 @@
             box-shadow: none; /* Remove default shadow */
             border: none; /* Remove any borders */
         }
+        /* Enhance select dropdown and input fields for dark mode */
+        select, input[type="text"], input[type="number"], input[type="time"] {
+            color: #ffffff;
+            background-color: #333;
+            border: 1px solid #555;
+            border-radius: 5px;
+            padding: 5px;
+            margin-bottom: 10px; /* Add space between form elements */
+        }
+
+        /* Styles for the timer message container */
+        #timer-container {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #424242; /* Dark background for visibility */
+            color: #FFD700; /* Gold color for text */
+            text-align: center;
+            font-size: 1.5em;
+            border: 2px solid #FFD700; /* Golden border around the container */
+            box-shadow: 0px 0px 10px #FFD700; /* Optional: Adds a glow effect */
+        }
+
+        /* Optionally, if you want "00:00:00" to stand out more without a box, you could increase its font weight or size */
+        #timer-display {
+            font-weight: bold; /* Makes the timer bold */
+            /* font-size: 1.6em; Optionally make the timer larger than the surrounding text */
+        }
+
         .nav-wrapper {
             background-color: #2a2139; /* Dark purple for navbar */
             width: 100%; /* Ensure full width */
@@ -100,7 +129,7 @@
             <li class="navbar-env-var"><span class="navbar-item">Public IP:</span> <span id="public-ip">Null</span></li>
             <li class="navbar-env-var"><span class="navbar-item">CUDA Version:</span> <span id="cuda-version">Null</span></li>
             <li class="navbar-env-var"><span class="navbar-item">Data Center ID:</span> <span id="dc-id">Null</span></li>
-            <li class="navbar-env-var"><span class="navbar-item">CPU Count:</span> <span id="cpu-count">Null</span></li>
+            <li class="navbar-env-var"><span class="navbar-item">vCPU Count:</span> <span id="cpu-count">Null</span></li>
         </ul>
     </div>
 </nav>
@@ -209,34 +238,34 @@
                 <span class="card-title">Timer Management</span>
                 <form id="timer-form">
                     <div class="input-field">
-                        <input id="pod_id" type="text" class="validate" required>
-                        <label for="pod_id">Pod ID</label>
-                    </div>
-                    <div class="input-field">
                         <select id="action">
                             <option value="" disabled selected>Choose your option</option>
                             <option value="stop">Stop</option>
                             <option value="remove">Remove</option>
                         </select>
-                        <label>Action</label>
+                        <label for="action">Action</label>
                     </div>
                     <div class="input-field">
-                        <input id="duration" type="number" class="validate" required>
+                        <input id="duration" type="number" min="1" class="validate" required>
                         <label for="duration">Duration (Minutes)</label>
                     </div>
-                    <button class="btn waves-effect waves-light" type="submit" name="action">Set Timer</button>
+                    <button class="btn waves-effect waves-light" type="submit">Set Timer</button>
                 </form>
             </div>
             <div class="card-action">
-                <h5>Active Timers:</h5>
-                <ul id="active-timers-list"></ul>
+                <!-- Ensure this button is outside the #timer-container but inside the form for semantic grouping -->
+                <button class="btn waves-effect waves-light red" id="cancel-timer-btn" style="display:none;">Cancel Timer</button>
+            </div>
+            <div id="timer-container" style="display: none;">
+                <p>This Pod is going to be <span id="action-type"></span> in: <span id="timer-display">00:00:00</span></p>
             </div>
         </div>
     </div>
 </div>
-   
-    
-</div>
+
+
+
+
 
 </div>
 
@@ -251,6 +280,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         var elems = document.querySelectorAll('select');
         M.FormSelect.init(elems);
+        fetchActiveTimers()
         checkForExistingFiles();
         fetchEnvironmentVariables();
     });
@@ -382,6 +412,104 @@ document.getElementById('run-speedtest-btn').addEventListener('click', function(
     });
 });
 
+// Timer form submission logic
+document.getElementById('timer-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const action = document.getElementById('action').value;
+    const duration = parseInt(document.getElementById('duration').value, 10); // Duration in minutes
+
+    // Assuming the podId is fetched from an environmental variable or similar
+    const podId = document.getElementById('pod-id').textContent.trim();
+
+    fetch('/set-timer', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ podId, action, duration })
+    })
+    .then(response => response.json())
+    .then(data => {
+        M.toast({html: data.message});
+        // Refresh the timers display
+        fetchActiveTimers(); 
+    })
+    .catch(error => console.error('Error setting timer:', error));
+});
+
+// Function to fetch and display active timers
+function fetchActiveTimers() {
+    fetch('/active-timers')
+    .then(response => response.json())
+    .then(timers => {
+        if (timers.length > 0) {
+            const timer = timers[0]; // Take the first active timer
+            const remainingTimeInSeconds = timer.remaining; // Assuming this is already in seconds from your server response
+            document.getElementById('timer-container').style.display = 'block'; // Show the timer container
+            document.getElementById('action-type').textContent = timer.action; // Set the action text
+            startCountdown(remainingTimeInSeconds);
+        } else {
+            document.getElementById('timer-container').style.display = 'none'; // Hide the timer container if no active timers
+        }
+    })
+    .catch(error => console.error('Error fetching active timers:', error));
+}
+
+// Start and display countdown timer
+function startCountdown(durationInSeconds) {
+    const timerDisplay = document.getElementById('timer-display');
+    let timer = durationInSeconds;
+    updateDisplay(timer); // Initial display update
+
+    const countdown = setInterval(function () {
+        timer -= 1;
+        updateDisplay(timer);
+        if (timer <= 0) {
+            clearInterval(countdown);
+            timerDisplay.textContent = "00:00:00";
+            document.getElementById('timer-container').style.display = 'none'; // Optionally hide the timer container
+            // Fetch to see if any new timers are set
+            fetchActiveTimers(); 
+        }
+    }, 1000);
+}
+
+function updateDisplay(seconds) {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
+    document.getElementById('timer-display').textContent = `${pad(hours)}:${pad(minutes)}:${pad(remainingSeconds)}`;
+}
+
+function pad(value) {
+    return value.toString().padStart(2, '0');
+}
+
+document.getElementById('cancel-timer-btn').addEventListener('click', function(e) {
+    e.preventDefault(); // Prevent default form submission behavior
+
+    // Fetch the pod ID and action from your form or other elements as necessary
+    const podId = document.getElementById('pod-id').textContent.trim();
+    const action = document.getElementById('action').value;
+
+    fetch('/cancel-timer', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ podId, action })
+    })
+    .then(response => response.json())
+    .then(data => {
+        M.toast({html: 'Timer cancelled successfully'});
+        // Update the UI as necessary to reflect the timer cancellation
+        document.getElementById('timer-container').style.display = 'none';
+    })
+    .catch(error => console.error('Error cancelling timer:', error));
+});
+
+
+document.getElementById('action-message').style.display = 'block';
     
 </script>
 
