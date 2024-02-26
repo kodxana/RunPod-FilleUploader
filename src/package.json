@@ -1,6 +1,6 @@
 {
     "name": "runpod-uploader",
-    "version": "1.0.0",
+    "version": "1.2.0",
     "description": "Made by Madiator2011",
     "main": "server.js",
     "scripts": {
