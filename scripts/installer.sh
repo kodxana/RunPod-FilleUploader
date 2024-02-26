@@ -23,7 +23,7 @@ chmod +x "${TUSD_BIN_PATH}"
 
 # Download and setup runpod-uploader binary
 echo "Downloading and setting up runpod-uploader binary..."
-curl -L https://github.com/kodxana/RunPod-FilleUploader/releases/download/v1.1/runpod-uploader -o "${RUNPOD_UPLOADER_BIN_PATH}"
+curl -L https://github.com/kodxana/RunPod-FilleUploader/releases/download/v1.2/runpod-uploader -o "${RUNPOD_UPLOADER_BIN_PATH}"
 chmod +x "${RUNPOD_UPLOADER_BIN_PATH}"
 
 # Download and setup hook scripts
