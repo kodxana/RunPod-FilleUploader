@@ -141,5 +141,35 @@ router.post('/run-speedtest', (req, res) => {
     });
 });
 
+let timers = [];
+
+router.post('/set-timer', (req, res) => {
+    const { podId, action, duration } = req.body;
+    const expiry = new Date(new Date().getTime() + duration * 60000); // Convert duration to milliseconds
+    const timerId = setTimeout(() => {
+        exec(`runpodctl ${action} pod ${podId}`, (error, stdout, stderr) => {
+            if (error) {
+                console.error(`Error executing runpodctl: ${error}`);
+                return;
+            }
+            console.log(`Timer action ${action} executed for pod ${podId}.`);
+        });
+    }, duration * 60000);
+
+    timers.push({ podId, action, expiry, timerId });
+    res.json({ message: `Timer set for ${action}ing pod ${podId} after ${duration} minutes.` });
+});
+
+router.get('/active-timers', (req, res) => {
+    const now = new Date();
+    const activeTimers = timers.filter(timer => timer.expiry > now).map(timer => ({
+        podId: timer.podId,
+        action: timer.action,
+        remaining: Math.round((timer.expiry - now) / 60000) // Remaining time in minutes
+    }));
+    res.json(activeTimers);
+});
+
+
 
 module.exports = router;
