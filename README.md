@@ -17,6 +17,7 @@
 ## 🚀 How to Install
 
 To get started with RunPod File Uploader, execute the following command:
+
 NOTE: Do not run this commands on your PC this tool is meant to run on RunPod pods!
 
 #### Installation
